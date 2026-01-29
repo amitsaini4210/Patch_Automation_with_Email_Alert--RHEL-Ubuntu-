@@ -1,0 +1,26 @@
+step:1
+Prerequisites (One Time)
+
+dnf install mailx sendmail -y
+systemctl enable --now sendmail
+
+
+
+step:2 
+make .sh file 
+
+step:3
+Give Execute Permission
+chmod +x /root/os_patch_email.sh
+
+
+step:4
+Schedule via Cron (Production)
+Weekly patching – Sunday 2 AM
+
+crontab -e
+0 2 * * Sun /root/os_patch_email.sh
+
+step:5
+check  Generated Logs
+cat /var/log/os_patching.log
