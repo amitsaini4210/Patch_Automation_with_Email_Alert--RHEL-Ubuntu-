@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# ==============================
+# CONFIGURATION
+# ==============================
+EMAIL="admin@example.com"
+HOSTNAME=$(hostname)
+DATE=$(date)
+LOG="/var/log/os_patching.log"
+REBOOT_STATUS="NO"
+
+echo "===================================" >> $LOG
+echo "Patching started on $DATE" >> $LOG
+echo "Server: $HOSTNAME" >> $LOG
+
+# ==============================
+# RHEL PATCHING
+# ==============================
+if [ -f /etc/redhat-release ]; then
+    echo "OS: RHEL" >> $LOG
+    dnf update --security -y >> $LOG 2>&1
+
+    if needs-restarting -r; then
+        REBOOT_STATUS="YES"
+    fi
+fi
+
+# ==============================
+# UBUNTU PATCHING
+# ==============================
+if [ -f /etc/lsb-release ]; then
+    echo "OS: Ubuntu" >> $LOG
+    apt update >> $LOG 2>&1
+    apt upgrade -y >> $LOG 2>&1
+
+    if [ -f /var/run/reboot-required ]; then
+        REBOOT_STATUS="YES"
+    fi
+fi
+
+echo "Patching completed on $(date)" >> $LOG
+echo "Reboot Required: $REBOOT_STATUS" >> $LOG
+
+# ==============================
+# EMAIL NOTIFICATION
+# ==============================
+mail -s "OS Patching Report - $HOSTNAME" $EMAIL <<EOF
+Hello Team,
+
+OS patching has been completed successfully.
+
+Server Name  : $HOSTNAME
+Date         : $DATE
+Reboot Needed: $REBOOT_STATUS
+
+Please review patch logs:
+$LOG
+
+Regards,
+Linux Admin Team
+EOF
